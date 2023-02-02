@@ -23,7 +23,10 @@ import {
 
 export default function App() {
 
-  const initialState = { total: '', firstName : '', lastName: '', address: '', email: '', phoneNum: '', cardName: '', cardNumber: '', expiry : '', cvv : '' }
+  const initialState = { total: '0', firstName : '', lastName: '', address: '', email: '', phoneNum: '', cardName: '', cardNumber: '', expiry : '', cvv : '' }
+
+  const initialModalState = {}
+  const [modalState, setModalState] = useState(initialModalState)
 
   const display = {show : false}
 
@@ -37,7 +40,7 @@ export default function App() {
 
   const [basicModal, setBasicModal] = useState(false);
 
-  const toggleShow = () => setBasicModal(!basicModal);
+  const toggleShow = () =>setBasicModal(!basicModal);
 
   async function setInput(key, value) {
     setFormState({ ...formState, [key]: value })
@@ -49,8 +52,10 @@ export default function App() {
     }
   }
 
+  function displayToggle(object){
+    toggleShow()
+  }
   function submitDetails(){
-    console.log(formState)
     fetch('https://a54trtwjo2.execute-api.us-west-2.amazonaws.com/Production/authenticatetransaction', {
     method: 'POST',
     headers: {
@@ -61,30 +66,29 @@ export default function App() {
     })
     .then(response => response.json())
     .then(response => alert(response))
-    setFormState(initialState)
+    //setFormState(initialState)
+    getTransactions()
   }
 
   function setDisplayValue(event){
     setDisplayState({...displayState, show: !displayState.show})
   }
 
-  var codes = []
-
-  useEffect(()=>{
-
+  function getTransactions(){
     fetch("https://a54trtwjo2.execute-api.us-west-2.amazonaws.com/Production/gettransactions")
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result) 
-          
-          result.map(t => codes.push(t.transactionNumber))
-          codes = Array.from(new Set(codes))
-          setAuthCodes(codes)
+          setAuthCodes(result)
         },
         (error) => {
         }
       )
+  }
+
+  useEffect(()=>{
+
+    getTransactions()
     
     }, [])
 
@@ -92,7 +96,6 @@ export default function App() {
 
   return (
     <MDBContainer className="py-5">
-      <form >
       <MDBRow>
         <MDBCol md="8" className="mb-4">
           <MDBCard className="mb-4">
@@ -227,17 +230,19 @@ export default function App() {
           </MDBCard>
         </MDBCol>
       </MDBRow>
-      </form>
       <MDBSwitch id='flexSwitchCheckDefault' label='Transactions' onChange={ setDisplayValue } />
       {
         
         displayState.show ? 
-          authCodes.map( authcode =>
-          <MDBRow>
+          authCodes.map( (authcode, index) =>
+          <MDBRow key={index}>
           <MDBCol size="md-4">
           <MDBListGroup  style={{ minWidthL: '22rem' }} light>
-            <MDBBtn  >{authcode}</MDBBtn><br/>
-            {/* onClick={toggleShow} */}
+            <MDBBtn onClick={ ()=>{
+                setModalState(authcode)
+                toggleShow()
+            }} >{authcode.transactionNumber}</MDBBtn><br/>
+            
           </MDBListGroup></MDBCol></MDBRow>)
         : <h2></h2>
       }
@@ -245,16 +250,22 @@ export default function App() {
         <MDBModalDialog>
           <MDBModalContent>
             <MDBModalHeader>
-              <MDBModalTitle>Transaction # : {}</MDBModalTitle>
+              <MDBModalTitle>Transaction # : {modalState.transactionNumber}</MDBModalTitle>
               <MDBBtn className='btn-close' color='none' onClick={toggleShow}></MDBBtn>
             </MDBModalHeader>
-            <MDBModalBody>...</MDBModalBody>
+            <MDBModalBody>
+                <MDBListGroup style={{ minWidthL: '22rem' }} light>
+                  <MDBListGroupItem>Name : {modalState.cardName}</MDBListGroupItem>
+                  <MDBListGroupItem>Amount : {modalState.totalAmount}</MDBListGroupItem>
+                  <MDBListGroupItem>transactionTime: {modalState.transactionTime}</MDBListGroupItem>
+                  <MDBListGroupItem>Authorization Code : {modalState.authenticationCode}</MDBListGroupItem>
+                </MDBListGroup>
+            </MDBModalBody>
 
             <MDBModalFooter>
               <MDBBtn color='secondary' onClick={toggleShow}>
                 Close
               </MDBBtn>
-              <MDBBtn>Save changes</MDBBtn>
             </MDBModalFooter>
           </MDBModalContent>
         </MDBModalDialog>
