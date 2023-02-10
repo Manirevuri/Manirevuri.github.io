@@ -20,7 +20,7 @@ import {
   MDBModalBody,
   MDBModalFooter,
 } from "mdb-react-ui-kit";
-
+   
 export default function App() {
 
   const initialState = { total: '0', firstName : '', lastName: '', address: '', email: '', phoneNum: '', cardName: '', cardNumber: '', expiry : '', cvv : '' }
